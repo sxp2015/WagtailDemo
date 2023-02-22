@@ -25,6 +25,8 @@
       <list>
         <option value="$MODULE_DIR$/home/templates" />
         <option value="$MODULE_DIR$/blog/templates" />
+        <option value="$MODULE_DIR$/search/templates" />
+        <option value="$MODULE_DIR$/wagtail_app/templates" />
       </list>
     </option>
   </component>

@@ -64,7 +64,7 @@ class BlogPage(Page):
     intro = models.CharField(verbose_name='内容介绍', max_length=250, blank=True)
     body = RichTextField(verbose_name='内容详情', blank=True)
     tags = ClusterTaggableManager(through=BlogPageTag, blank=True)
-    categories = ParentalManyToManyField(BlogCategory, blank=True)
+    categories = ParentalManyToManyField(BlogCategory, blank=True, verbose_name='博客分类')
 
     search_fields = Page.search_fields + [
         index.SearchField('intro'),
@@ -76,11 +76,10 @@ class BlogPage(Page):
             FieldPanel('date'),
             FieldPanel('tags'),
             FieldPanel('categories', widget=forms.CheckboxSelectMultiple),
-        ], heading="Blog information"),
-        FieldPanel('date'),
+        ], heading="博客信息"),
         FieldPanel('intro'),
         FieldPanel('body', classname='full'),
-        InlinePanel('gallery_images', label="Gallery images"),
+        InlinePanel('gallery_images', label="相册图片"),
     ]
 
     def main_image(self):
