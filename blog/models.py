@@ -2,12 +2,22 @@ from django.db import models
 from django.utils import timezone
 from wagtail.fields import RichTextField
 from wagtail.models import Page, Orderable
-from wagtail.admin.panels import FieldPanel, InlinePanel
+from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.search import index
 from modelcluster.fields import ParentalKey
+from modelcluster.contrib.taggit import ClusterTaggableManager
+from taggit.models import TaggedItemBase
 
 
 # Create your models here.
+
+class BlogPageTag(TaggedItemBase):
+    content_object = ParentalKey(
+        'BlogPage',
+        related_name='tagged_items',
+        on_delete=models.CASCADE
+    )
+
 
 class BlogIndexPage(Page):
     intro = RichTextField(blank=True)
@@ -31,6 +41,7 @@ class BlogPage(Page):
     date = models.DateField(verbose_name='发表日期', default=timezone.now)
     intro = models.CharField(verbose_name='内容介绍', max_length=250, blank=True)
     body = RichTextField(verbose_name='内容详情', blank=True)
+    tags = ClusterTaggableManager(through=BlogPageTag, blank=True)
 
     search_fields = Page.search_fields + [
         index.SearchField('intro'),
@@ -38,11 +49,22 @@ class BlogPage(Page):
     ]
 
     content_panels = Page.content_panels + [
+        MultiFieldPanel([
+            FieldPanel('date'),
+            FieldPanel('tags'),
+        ], heading="Blog information"),
         FieldPanel('date'),
         FieldPanel('intro'),
         FieldPanel('body', classname='full'),
         InlinePanel('gallery_images', label="Gallery images"),
     ]
+
+    def main_image(self):
+        gallery_item = self.gallery_images.first()
+        if gallery_item:
+            return gallery_item.image
+        else:
+            return None
 
 
 class BlogPageGalleryImage(Orderable):
