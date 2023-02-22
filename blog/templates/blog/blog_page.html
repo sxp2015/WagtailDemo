@@ -2,32 +2,53 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 {% block body_class %}template-blogpage{% endblock %}
 {% block content %}
-<h1><a href="#">{{ page.title }}</a></h1>
+    <h1><a href="#">{{ page.title }}</a></h1>
     <p class="meta">{{ page.date }}</p>
+
+    {% with categories=page.categories.all %}
+        {% if categories %}
+            <h3>文章分类:</h3>
+            <ul>
+                {% for category in categories %}
+                    <li style="display:inline">
+                        {% image category.icon fill-32x32 style="vertical-align:middle" %}
+                        {{ category.name }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
 
     <div class="intro">{{ page.intro }}</div>
 
     {{ page.body|richtext }}
 
-     {% for item in page.gallery_images.all %}
-        <div style="float: left; margin: 10px">
+    {% for item in page.gallery_images.all %}
+        <p>
+        <div style=" margin: 10px">
             {% image item.image fill-320x240 %}
             <p>{{ item.caption }}</p>
         </div>
+        </p>
     {% endfor %}
 
-    <p><a href="{{ page.get_parent.url }}">Return to blog</a></p>
+    <p><a href="{{ page.get_parent.url }}">返回博客>>></a></p>
 
 
     {% with tags=page.tags.all %}
-    {% if tags %}
-        <div class="tags">
-            <h3>Tags</h3>
-            {% for tag in tags %}
-                <a href="{% slugurl 'tags' %}?tag={{ tag }}"><button type="button">{{ tag }}</button></a>
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endwith %}
+        {% if tags %}
+            <div class="tags">
+                <p>
+                <h3>标签：</h3>
+                </p>
+                {% for tag in tags %}
+                    <a href="{% slugurl 'tags' %}?tag={{ tag }}">
+                        <button type="button">{{ tag }}</button>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
 {% endblock %}

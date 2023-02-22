@@ -1,12 +1,14 @@
 from django.db import models
+from django import forms
 from django.utils import timezone
 from wagtail.fields import RichTextField
 from wagtail.models import Page, Orderable
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.search import index
-from modelcluster.fields import ParentalKey
+from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.models import TaggedItemBase
+from wagtail.snippets.models import register_snippet
 
 
 # Create your models here.
@@ -37,11 +39,32 @@ class BlogIndexPage(Page):
         return context
 
 
+@register_snippet
+class BlogCategory(models.Model):
+    name = models.CharField(max_length=255)
+    icon = models.ForeignKey(
+        'wagtailimages.Image', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='+'
+    )
+
+    panels = [
+        FieldPanel('name'),
+        FieldPanel('icon'),
+    ]
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = '博客分类'
+
+
 class BlogPage(Page):
     date = models.DateField(verbose_name='发表日期', default=timezone.now)
     intro = models.CharField(verbose_name='内容介绍', max_length=250, blank=True)
     body = RichTextField(verbose_name='内容详情', blank=True)
     tags = ClusterTaggableManager(through=BlogPageTag, blank=True)
+    categories = ParentalManyToManyField(BlogCategory, blank=True)
 
     search_fields = Page.search_fields + [
         index.SearchField('intro'),
@@ -52,6 +75,7 @@ class BlogPage(Page):
         MultiFieldPanel([
             FieldPanel('date'),
             FieldPanel('tags'),
+            FieldPanel('categories', widget=forms.CheckboxSelectMultiple),
         ], heading="Blog information"),
         FieldPanel('date'),
         FieldPanel('intro'),
@@ -65,6 +89,16 @@ class BlogPage(Page):
             return gallery_item.image
         else:
             return None
+
+
+class BlogTagIndexPage(Page):
+    def get_context(self, request, *args, **kwargs):
+        # 过滤Tag
+        tag = request.GET.get('tag')
+        blog_pages = BlogPage.objects.filter(tags__name=tag)
+        context = super().get_context(request)
+        context['blog_pages'] = blog_pages
+        return context
 
 
 class BlogPageGalleryImage(Orderable):
