@@ -9,6 +9,8 @@ from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from taggit.models import TaggedItemBase
 from wagtail.snippets.models import register_snippet
+from wagtail.api import APIField
+from rest_framework.fields import DateField, DateTimeField
 
 
 # Create your models here.
@@ -71,6 +73,14 @@ class BlogPage(Page):
         index.SearchField('body'),
     ]
 
+    api_fields = [
+        APIField('date'),
+        APIField('intro'),
+        APIField('body'),
+        APIField('tags'),
+        APIField('categories'),
+    ]
+
     content_panels = Page.content_panels + [
         MultiFieldPanel([
             FieldPanel('date'),
@@ -111,3 +121,43 @@ class BlogPageGalleryImage(Orderable):
         FieldPanel('image'),
         FieldPanel('caption'),
     ]
+
+
+class BlogPageForAPI(Page):
+    published_date = models.DateTimeField()
+    body = RichTextField()
+    feed_image = models.ForeignKey('wagtailimages.Image', on_delete=models.SET_NULL, null=True)
+    private_field = models.CharField(max_length=255)
+
+    content_panels = Page.content_panels + [
+        FieldPanel('published_date'),
+        FieldPanel('body'),
+        FieldPanel('feed_image'),
+        FieldPanel('private_field'),
+
+    ]
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request)
+        blog_pages = self.get_children().live().order_by('-first_published_at')
+        context['blog_pages'] = blog_pages
+        return context
+
+    # Export fields over the API
+    api_fields = [
+        APIField('published_date'),
+        APIField('published_date_display', serializer=DateTimeField(format='%Y-%m-%d %H:%M:%S', source='published_date')),
+        APIField('body'),
+        APIField('feed_image'),
+        APIField('authors'),  # This will nest the relevant BlogPageAuthor objects in the API response
+    ]
+
+
+class BlogPageAuthor(Orderable, Page):
+    page = models.ForeignKey(BlogPageForAPI, on_delete=models.CASCADE, related_name='authors', verbose_name='所属博客')
+    name = models.CharField(max_length=255, verbose_name='作者名称')
+    content_panels = Page.content_panels + [
+        FieldPanel('page'),
+        FieldPanel('name')
+    ]
+    api_fields = [APIField('name')]

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load wagtailcore_tags wagtailimages_tags  wagtailadmin_tags wagtailembeds_tags%}
+{% block body_class %}template-blog_page_for_api{% endblock %}
+{% block content %}
+     {% for post in blog_pages %}
+        {% with post=post.specific %}
+            <p>
+            <div style="float: left; margin: 10px 30px; border: 2px solid #d3d3d3">
+            {% with post.main_image as main_image %}
+                {% if main_image %}{% image main_image fill-160x100 %}{% endif %}
+            {% endwith %}
+
+            <h2><a href="{% pageurl post %}">{{ post.title }}</a></h2>
+            <p>{{ post.intro }}</p>
+{#               {{ post.body|richtext }}#}
+        {% endwith %}
+    </div>
+        </p>
+    {% endfor %}
+{% endblock %}

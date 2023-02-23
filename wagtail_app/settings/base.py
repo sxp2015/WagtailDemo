@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "weixin",
+    "rest_framework",
     "wagtail.api.v2",
 ]
 
